@@ -73,10 +73,8 @@ self.connection = {};
         try {
             eval(code);
         } catch (e) {
-            self.postMessage({type: 'executeFailure'});
-            throw e;
+            self.postMessage({type: 'executeFailure', error: e});
         }
-
         self.postMessage({type: 'executeSuccess'});
     }
 

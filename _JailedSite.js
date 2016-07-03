@@ -118,7 +118,11 @@
          case 'method':
              var method = this._interface[data.name];
              var args = this._unwrap(data.args);
+                 try {
              method.apply(null, args);
+                     } catch (e){
+                         this._connection.send({type:'disconnect', msg: {type:'executeFailure', error: e}});
+                     }
              break;
          case 'callback':
              var method = this._store.fetch(data.id)[data.num];
@@ -137,7 +141,7 @@
              break;
          case 'disconnect':
              this._disconnectHandler();
-             this._connection.disconnect();
+             this._connection.disconnect(data.msg);
              break;
          }
     }

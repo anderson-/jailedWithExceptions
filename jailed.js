@@ -61,6 +61,7 @@ if (typeof window == 'undefined') {
      */
     var Whenable = function() {
         this._emitted = false;
+        this._msg = undefined;
         this._handlers = [];
     }
 
@@ -71,13 +72,13 @@ if (typeof window == 'undefined') {
      * all future subscibed listeners will be immideately issued
      * instead of being stored)
      */
-    Whenable.prototype.emit = function(){
+    Whenable.prototype.emit = function(msg){
         if (!this._emitted) {
             this._emitted = true;
 
             var handler;
             while(handler = this._handlers.pop()) {
-                setTimeout(handler,0);
+                setTimeout(handler.bind(null, msg),0);
             }
         }
     }
@@ -94,7 +95,7 @@ if (typeof window == 'undefined') {
     Whenable.prototype.whenEmitted = function(handler){
         handler = this._checkHandler(handler);
         if (this._emitted) {
-            setTimeout(handler, 0);
+            setTimeout(handler.bind(null, this._msg), 0);
         } else {
             this._handlers.push(handler);
         }
@@ -449,7 +450,7 @@ if (typeof window == 'undefined') {
                 me._executeSCb();
                 break;
             case 'executeFailure':
-                me._executeFCb();
+                me._executeFCb(m.error);
                 break;
             }
         });
@@ -579,8 +580,12 @@ if (typeof window == 'undefined') {
     /**
      * Disconnects the plugin when it is not needed anymore
      */
-    Connection.prototype.disconnect = function() {
-        this._platformConnection.disconnect();
+    Connection.prototype.disconnect = function(msg) {
+        if (msg != null){
+            this._platformConnection._messageHandler(msg);
+        } else {
+            this._platformConnection.disconnect();
+        }
     }
 
 
@@ -628,8 +633,8 @@ if (typeof window == 'undefined') {
         var me = this;
                
         // binded failure callback
-        this._fCb = function(){
-            me._fail.emit();
+        this._fCb = function(e){
+            me._fail.emit(e);
             me.disconnect();
         }
                
